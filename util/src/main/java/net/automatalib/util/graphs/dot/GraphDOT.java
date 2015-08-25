@@ -1,25 +1,27 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.util.graphs.dot;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.Flushable;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,16 +29,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.automatalib.AutomataLibSettings;
 import net.automatalib.automata.Automaton;
-import net.automatalib.automata.dot.DOTPlottableAutomaton;
-import net.automatalib.automata.dot.DefaultDOTHelperAutomaton;
-import net.automatalib.commons.util.Pair;
+import net.automatalib.automata.graphs.TransitionEdge;
+import net.automatalib.commons.dotutil.DOT;
 import net.automatalib.commons.util.mappings.MutableMapping;
 import net.automatalib.commons.util.strings.StringUtil;
 import net.automatalib.graphs.Graph;
 import net.automatalib.graphs.UndirectedGraph;
+import net.automatalib.graphs.concepts.GraphViewable;
 import net.automatalib.graphs.dot.AggregateDOTHelper;
-import net.automatalib.graphs.dot.DOTPlottableGraph;
 import net.automatalib.graphs.dot.DefaultDOTHelper;
 import net.automatalib.graphs.dot.GraphDOTHelper;
 import net.automatalib.util.automata.Automata;
@@ -48,22 +50,49 @@ import net.automatalib.util.automata.Automata;
  * This class does not take care of actually processing the generated DOT data. For this,
  * please take a look at the <tt>automata-commons-dotutil</tt> artifact.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  */
 public abstract class GraphDOT {
 	
+	
+	static {
+		AutomataLibSettings settings = AutomataLibSettings.getInstance();
+		
+		String dotExePath = settings.getProperty("dot.exe.dir");
+		String dotExeName = settings.getProperty("dot.exe.name", "dot");
+		
+		String dotExe = dotExeName;
+		if (dotExePath != null) {
+			Path dotBasePath = FileSystems.getDefault().getPath(dotExePath);
+			Path resolvedDotPath = dotBasePath.resolve(dotExeName);
+			dotExe = resolvedDotPath.toString();
+		}
+		
+		DOT.setDotExe(dotExe);
+	}
+	
+	public static boolean isDotUsable() {
+		return DOT.checkUsable();
+	}
+	
+	
+	public static <N,E> void write(GraphViewable gv, Appendable a) throws IOException {
+		Graph<?,?> graph = gv.graphView();
+		write(graph, a);
+	}
+	
 	/**
-	 * Renders a {@link DOTPlottableGraph} in the GraphVIZ DOT format. 
+	 * Renders a {@link Graph} in the GraphVIZ DOT format. 
 	 * @param graph the graph to render
 	 * @param a the appendable to write to.
 	 * @throws IOException if writing to <tt>a</tt> fails. 
 	 */
 	@SafeVarargs
-	public static <N,E> void write(DOTPlottableGraph<N, E> graph,
+	public static <N,E> void write(Graph<N, E> graph,
 			Appendable a, GraphDOTHelper<N,? super E> ...additionalHelpers) throws IOException {
 		GraphDOTHelper<N,? super E> helper = graph.getGraphDOTHelper();
-		write(graph, helper, a, additionalHelpers);
+		writeRaw(graph, helper, a, additionalHelpers);
 	}
 	
 	/**
@@ -77,11 +106,11 @@ public abstract class GraphDOT {
 	 */
 	@SafeVarargs
 	public static <S,I,T> void write(Automaton<S,I,T> automaton,
-			GraphDOTHelper<S, ? super Pair<I,T>> helper,
+			GraphDOTHelper<S, ? super TransitionEdge<I,T>> helper,
 			Collection<? extends I> inputAlphabet,
-			Appendable a, GraphDOTHelper<S,? super Pair<I,T>> ...additionalHelpers) throws IOException {
-		Graph<S,Pair<I,T>> ag = Automata.asGraph(automaton, inputAlphabet);
-		write(ag, helper, a, additionalHelpers);
+			Appendable a, GraphDOTHelper<S,? super TransitionEdge<I,T>> ...additionalHelpers) throws IOException {
+		Graph<S,TransitionEdge<I,T>> ag = Automata.asGraph(automaton, inputAlphabet);
+		writeRaw(ag, helper, a, additionalHelpers);
 	}
 	
 	/**
@@ -95,57 +124,23 @@ public abstract class GraphDOT {
 	@SafeVarargs
 	public static <S,I,T> void write(Automaton<S,I,T> automaton,
 			Collection<? extends I> inputAlphabet,
-			Appendable a, GraphDOTHelper<S,? super Pair<I,T>> ...additionalHelpers) throws IOException {
-		GraphDOTHelper<S,? super Pair<I,T>> helper;
-		if(automaton instanceof DOTPlottableAutomaton) {
-			DOTPlottableAutomaton<S,I,T> dp = (DOTPlottableAutomaton<S,I,T>)automaton;
-			helper = dp.getDOTHelper();
-		}
-		else
-			helper = new DefaultDOTHelperAutomaton<S, I, T, Automaton<S,I,T>>(automaton);
+			Appendable a, GraphDOTHelper<S,? super TransitionEdge<I,T>> ...additionalHelpers) throws IOException {
 		
-		write(automaton, helper, inputAlphabet, a, additionalHelpers);
+		write(automaton.transitionGraphView(inputAlphabet), a, additionalHelpers);
 	}
 	
 	@SafeVarargs
-	public static <S,I,T> void write(DOTPlottableAutomaton<S, I, T> automaton, Appendable a, GraphDOTHelper<S,? super Pair<I,T>> ...additionalHelpers) throws IOException {
-		write(automaton, automaton.getDOTHelper(), automaton.getInputAlphabet(), a, additionalHelpers);
-	}
-	
-	
-	/**
-	 * Renders a {@link Graph} in the GraphVIZ DOT format.
-	 * 
-	 * @param graph the graph to render
-	 * @param a the appendable to write to
-	 * @throws IOException if writing to <tt>a</tt> fails
-	 */
-	@SuppressWarnings("unchecked")
-	@SafeVarargs
-	public static <N,E> void write(Graph<N,E> graph,
-			Appendable a, GraphDOTHelper<N,? super E> ...additionalHelpers) throws IOException {
-		GraphDOTHelper<N, ? super E> helper = null;
-		if(graph instanceof DOTPlottableGraph) {
-			DOTPlottableGraph<N,E> plottable = (DOTPlottableGraph<N,E>)graph;
-			helper = plottable.getGraphDOTHelper();
-		}
-		else
-			helper = (GraphDOTHelper<N,? super E>)DefaultDOTHelper.getInstance();
-		write(graph, helper, a, additionalHelpers);
-	}
-	
-	@SafeVarargs
-	public static <N,E> void write(Graph<N,E> graph, GraphDOTHelper<N, ? super E> helper, Appendable a, GraphDOTHelper<N, ? super E> ...additionalHelpers) throws IOException {
+	public static <N,E> void writeRaw(Graph<N,E> graph, GraphDOTHelper<N, ? super E> helper, Appendable a, GraphDOTHelper<N, ? super E> ...additionalHelpers) throws IOException {
 		List<GraphDOTHelper<N,? super E>> helpers = new ArrayList<>(additionalHelpers.length + 1);
 		helpers.add(helper);
 		helpers.addAll(Arrays.asList(additionalHelpers));
 		
-		write(graph, a, helpers);
+		writeRaw(graph, a, helpers);
 	}
 	
-	public static <N,E> void write(Graph<N,E> graph, Appendable a, List<GraphDOTHelper<N,? super E>> helpers) throws IOException {
+	public static <N,E> void writeRaw(Graph<N,E> graph, Appendable a, List<GraphDOTHelper<N,? super E>> helpers) throws IOException {
 		AggregateDOTHelper<N, E> aggHelper = new AggregateDOTHelper<>(helpers);
-		write(graph, aggHelper, a);
+		writeRaw(graph, aggHelper, a);
 	}
 	
 	/**
@@ -156,7 +151,7 @@ public abstract class GraphDOT {
 	 * @param a the appendable to write to
 	 * @throws IOException if writing to <tt>a</tt> fails
 	 */
-	public static <N,E> void write(Graph<N, E> graph,
+	public static <N,E> void writeRaw(Graph<N, E> graph,
 			GraphDOTHelper<N,? super E> dotHelper,
 			Appendable a) throws IOException {
 		
@@ -171,10 +166,28 @@ public abstract class GraphDOT {
 			a.append("di");
 		a.append("graph g {\n");
 		
+
+		Map<String,String> props = new HashMap<>();
+		
+		dotHelper.getGlobalNodeProperties(props);
+		if(!props.isEmpty()) {
+			a.append('\t').append("node");
+			appendParams(props, a);
+			a.append(";\n");
+		}
+		
+		props.clear();
+		dotHelper.getGlobalEdgeProperties(props);
+		if(!props.isEmpty()) {
+			a.append('\t').append("edge");
+			appendParams(props, a);
+			a.append(";\n");
+		}
+		
+		
 		dotHelper.writePreamble(a);
 		a.append('\n');
 		
-		Map<String,String> props = new HashMap<>();
 		
 		MutableMapping<N,String> nodeNames = graph.createStaticNodeMapping();
 		
@@ -195,8 +208,8 @@ public abstract class GraphDOT {
 			String srcId = nodeNames.get(node);
 			if(srcId == null)
 				continue;
-			Collection<E> outEdges = graph.getOutgoingEdges(node);
-			if(outEdges == null || outEdges.isEmpty())
+			Collection<? extends E> outEdges = graph.getOutgoingEdges(node);
+			if(outEdges.isEmpty())
 				continue;
 			for(E e : outEdges) {
 				N tgt = graph.getTarget(e);
@@ -225,14 +238,17 @@ public abstract class GraphDOT {
 		a.append('\n');
 		dotHelper.writePostamble(nodeNames, a);
 		a.append("}\n");
+		if (a instanceof Flushable) {
+			((Flushable) a).flush();
+		}
 	}
 	
-	public static <N,E> void writeToFile(Graph<N,E> graph,
+	public static <N,E> void writeToFileRaw(Graph<N,E> graph,
 			GraphDOTHelper<N,E> dotHelper,
 			File file) throws IOException {
 		
 		try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-			write(graph, dotHelper, writer);
+			writeRaw(graph, dotHelper, writer);
 		}
 	}
 	
@@ -252,7 +268,7 @@ public abstract class GraphDOT {
 			String value = e.getValue();
 			a.append(e.getKey()).append("=");
 			// HTML labels have to be enclosed in <> instead of ""
-			if(key.equals(GraphDOTHelper.LABEL) && value.startsWith("<HTML>"))
+			if(key.equals(GraphDOTHelper.CommonAttrs.LABEL) && value.toUpperCase().startsWith("<HTML>"))
 				a.append('<').append(value.substring(6)).append('>');
 			else
 				StringUtil.enquote(e.getValue(), a);

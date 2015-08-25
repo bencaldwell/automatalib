@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.words;
 
@@ -20,11 +19,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Spliterator;
+
+import javax.annotation.Nonnull;
+
+import com.google.common.base.Function;
 
 /**
  * A word consisting of a single letter only.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  * @param <I> symbol class
  * @see Collections#singletonList(Object)
@@ -189,8 +193,8 @@ final class LetterWord<I> extends Word<I> {
 	 * @see net.automatalib.words.Word#isPrefixOf(net.automatalib.words.Word)
 	 */
 	@Override
-	public boolean isPrefixOf(Word<I> other) {
-		if(other.length() == 0)
+	public boolean isPrefixOf(Word<?> other) {
+		if(other.isEmpty())
 			return false;
 		return Objects.equals(letter, other.getSymbol(0));
 	}
@@ -201,9 +205,10 @@ final class LetterWord<I> extends Word<I> {
 	 * @see net.automatalib.words.Word#longestCommonPrefix(net.automatalib.words.Word)
 	 */
 	@Override
-	public Word<I> longestCommonPrefix(Word<I> other) {
-		if(isPrefixOf(other))
+	public Word<I> longestCommonPrefix(Word<?> other) {
+		if(isPrefixOf(other)) {
 			return this;
+		}
 		return Word.epsilon();
 	}
 
@@ -213,7 +218,7 @@ final class LetterWord<I> extends Word<I> {
 	 * @see net.automatalib.words.Word#isSuffixOf(net.automatalib.words.Word)
 	 */
 	@Override
-	public boolean isSuffixOf(Word<I> other) {
+	public boolean isSuffixOf(Word<?> other) {
 		if(other.isEmpty())
 			return false;
 		return Objects.equals(letter, other.lastSymbol());
@@ -225,7 +230,7 @@ final class LetterWord<I> extends Word<I> {
 	 * @see net.automatalib.words.Word#longestCommonSuffix(net.automatalib.words.Word)
 	 */
 	@Override
-	public Word<I> longestCommonSuffix(Word<I> other) {
+	public Word<I> longestCommonSuffix(Word<?> other) {
 		if(isSuffixOf(other))
 			return this;
 		return Word.epsilon();
@@ -249,6 +254,19 @@ final class LetterWord<I> extends Word<I> {
 	public Word<I> trimmed() {
 		return this;
 	}
+
+	@Nonnull
+	@Override
+	public <T> Word<T> transform(Function<? super I,? extends T> transformer) {
+		T transformed = transformer.apply(letter);
+		return new LetterWord<>(transformed);
+	}
 	
+	
+	@Override
+	@Nonnull
+	public Spliterator<I> spliterator() {
+		return Collections.singleton(letter).spliterator();
+	}
 	
 }

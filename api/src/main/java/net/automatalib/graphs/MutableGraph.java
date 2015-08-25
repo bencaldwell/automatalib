@@ -1,33 +1,37 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.graphs;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * A graph that allows modification. Note that this interface only exposes
  * methods for extending a graph. If also destructive modifications should be performed,
  * {@link ShrinkableGraph} is the adequate interface.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  * @param <N> node class
  * @param <E> edge class
  * @param <NP> node property class
  * @param <EP> edge property class
  */
+@ParametersAreNonnullByDefault
 public interface MutableGraph<N, E, NP, EP> extends UniversalGraph<N,E,NP,EP> {
 	
 	/**
@@ -36,14 +40,18 @@ public interface MutableGraph<N, E, NP, EP> extends UniversalGraph<N,E,NP,EP> {
 	 * a <code>null</code> parameter.
 	 * @return the newly inserted node
 	 */
-	public N addNode();
+	@Nonnull
+	default public N addNode() {
+		return addNode(null);
+	}
 	
 	/**
 	 * Adds a new node to the graph.
 	 * @param property the property for the new node
 	 * @return the newly inserted node
 	 */
-	public N addNode(NP property);
+	@Nonnull
+	public N addNode(@Nullable NP property);
 	
 	/**
 	 * Inserts an edge in the graph, with the default property.
@@ -54,7 +62,10 @@ public interface MutableGraph<N, E, NP, EP> extends UniversalGraph<N,E,NP,EP> {
 	 * @param target the target node
 	 * @return the edge connecting the given nodes
 	 */
-	public E connect(N source, N target);
+	@Nonnull
+	default public E connect(N source, N target) {
+		return connect(source, target, null);
+	}
 	
 	/**
 	 * Inserts an edge in the graph.
@@ -63,9 +74,10 @@ public interface MutableGraph<N, E, NP, EP> extends UniversalGraph<N,E,NP,EP> {
 	 * @param property the property of the edge
 	 * @return the newly inserted edge
 	 */
-	public E connect(N source, N target, EP property);
+	@Nonnull
+	public E connect(N source, N target, @Nullable EP property);
 	
-	public void setNodeProperty(N node, NP property);
-	public void setEdgeProperty(E edge, EP property);
+	public void setNodeProperty(N node, @Nullable NP property);
+	public void setEdgeProperty(E edge, @Nullable EP property);
 	
 }

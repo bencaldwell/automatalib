@@ -1,20 +1,22 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.ts.acceptors;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 import net.automatalib.ts.DeterministicTransitionSystem;
 import net.automatalib.ts.UniversalDTS;
@@ -22,11 +24,34 @@ import net.automatalib.ts.UniversalDTS;
 /**
  * A deterministic acceptor transition system.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  * @see AcceptorTS
  * @see DeterministicTransitionSystem
  */
 public interface DeterministicAcceptorTS<S, I> extends AcceptorTS<S, I>,
 		UniversalDTS<S, I, S, Boolean, Void> {
+	
+	@Override
+	default public boolean isAccepting(Collection<? extends S> states) {
+		if (states.isEmpty()) {
+			return false;
+		}
+		Iterator<?extends S> stateIt = states.iterator();
+		assert stateIt.hasNext();
+		
+		S firstState = stateIt.next();
+		if (stateIt.hasNext()) {
+			throw new IllegalArgumentException("Acceptance of state sets is undefined for DFAs");
+		}
+		return isAccepting(firstState);
+	}
+	
+	@Override
+	default public boolean accepts(Iterable<? extends I> input) {
+		S state = getState(input);
+		if(state == null)
+			return false;
+		return isAccepting(state);
+	}
 }

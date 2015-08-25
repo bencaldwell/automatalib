@@ -1,29 +1,31 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.words;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Spliterator;
 
 
 /**
  * An immutable word implementation that is based on the idea of a common array storage.
  * This allows a very efficient creation of subwords (e.g., prefixes and suffixes).
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  * @param <I> input symbol class
  */
@@ -32,7 +34,7 @@ final class SharedWord<I> extends Word<I> {
 	/**
 	 * Iterator for iterating over {@link SharedWord}s.
 	 * 
-	 * @author Malte Isberner <malte.isberner@gmail.com>
+	 * @author Malte Isberner 
 	 *
 	 * @param <I> symbol class.
 	 */
@@ -61,6 +63,9 @@ final class SharedWord<I> extends Word<I> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public I next() {
+			if(currIdx >= endIdx) {
+				throw new NoSuchElementException();
+			}
 			return (I)storage[currIdx++];
 		}
 
@@ -175,6 +180,12 @@ final class SharedWord<I> extends Word<I> {
 		System.arraycopy(storage, this.offset + offset, array, tgtOfs, num);
 	}
 	
+	@Override
+	@SuppressWarnings("unchecked")
+	public I firstSymbol() {
+		return (I)storage[offset];
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see net.automatalib.words.Word#lastSymbol()
@@ -182,7 +193,7 @@ final class SharedWord<I> extends Word<I> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public I lastSymbol() {
-		return (I)storage[length-1];
+		return (I)storage[offset + length-1];
 	}
 
 	/*
@@ -212,4 +223,10 @@ final class SharedWord<I> extends Word<I> {
 		System.arraycopy(storage, offset, trimmed, 0, length);
 		return new SharedWord<>(trimmed);
 	}
+	
+	@Override
+	@SuppressWarnings("unchecked")
+    public Spliterator<I> spliterator() {
+		return Arrays.spliterator((I[]) storage, offset, offset + length);
+    }
 }

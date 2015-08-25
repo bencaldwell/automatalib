@@ -1,41 +1,35 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.util;
 
 import java.util.BitSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.PrimitiveIterator;
 
 /**
  * Iterator for iterating over a BitSet like over a normal collection.
  * The type returned by next() is {@link Integer}.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  */
-public class BitSetIterator implements Iterator<Integer> {
+public class BitSetIterator implements Iterator<Integer>, PrimitiveIterator.OfInt {
 	private final BitSet bitSet;
-	private int currBitIdx = 0;
-	
-	/*
-	 * Set currBitIdx to the next index which contains a 1-bit.
-	 */
-	private void findNextSetBit() {
-		while(currBitIdx < bitSet.size() && !bitSet.get(currBitIdx))
-			currBitIdx++;
-	}
+	private int currBitIdx;
+	private int lastBitIdx;
 	
 	/**
 	 * Constructor.
@@ -43,7 +37,8 @@ public class BitSetIterator implements Iterator<Integer> {
 	 */
 	public BitSetIterator(BitSet bitSet) {
 		this.bitSet = bitSet;
-		findNextSetBit();
+		this.currBitIdx = bitSet.nextSetBit(0);
+		this.lastBitIdx = -1;
 	}
 	
 	/*
@@ -52,7 +47,7 @@ public class BitSetIterator implements Iterator<Integer> {
 	 */
 	@Override
 	public boolean hasNext() {
-		return currBitIdx < bitSet.size();
+		return (currBitIdx != -1);
 	}
 
 	/*
@@ -60,15 +55,14 @@ public class BitSetIterator implements Iterator<Integer> {
 	 * @see java.util.Iterator#next()
 	 */
 	@Override
-	public Integer next() {
-		if(currBitIdx < bitSet.size()) {
-			int oldIdx = currBitIdx;
-			currBitIdx++;
-			findNextSetBit();
-			return oldIdx;
+	public int nextInt() {
+		if (currBitIdx == -1) {
+			throw new NoSuchElementException();
 		}
+		lastBitIdx = currBitIdx;
+		currBitIdx = bitSet.nextSetBit(currBitIdx + 1);
 		
-		return null;
+		return lastBitIdx;
 	}
 
 	/*
@@ -77,7 +71,9 @@ public class BitSetIterator implements Iterator<Integer> {
 	 */
 	@Override
 	public void remove() {
-		bitSet.clear(currBitIdx);
-		findNextSetBit();
+		if (lastBitIdx == -1) {
+			throw new NoSuchElementException();
+		}
+		bitSet.clear(lastBitIdx);
 	}
 }

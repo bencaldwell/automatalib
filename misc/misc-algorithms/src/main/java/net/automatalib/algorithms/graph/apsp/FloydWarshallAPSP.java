@@ -1,24 +1,27 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.algorithms.graph.apsp;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.automatalib.algorithms.graph.GraphAlgorithms;
 import net.automatalib.graphs.Graph;
@@ -29,14 +32,17 @@ import net.automatalib.graphs.concepts.NodeIDs;
  * Implementation of the Floyd-Warshall dynamic programming algorithm for the
  * all pairs shortest paths problem.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  * @param <N> node class
  * @param <E> edge class
  */
+@ParametersAreNonnullByDefault
 public class FloydWarshallAPSP<N,E> implements APSPResult<N,E> {
 	
+	@ParametersAreNonnullByDefault
 	private static final class APSPRecord<N,E> {
+		@Nullable
 		public final E edge;
 		public float distance;
 		public int middle;
@@ -57,6 +63,7 @@ public class FloydWarshallAPSP<N,E> implements APSPResult<N,E> {
 	}
 	
 	
+	@Nonnull
 	public static <N,E> APSPResult<N,E> findAPSP(Graph<N,E> graph, EdgeWeights<E> edgeWeights) {
 		FloydWarshallAPSP<N, E> fw = new FloydWarshallAPSP<>(graph, edgeWeights);
 		fw.findAPSP();
@@ -64,7 +71,9 @@ public class FloydWarshallAPSP<N,E> implements APSPResult<N,E> {
 	}
 	
 	private final int size;
+	@Nonnull
 	private final NodeIDs<N> ids;
+	@Nonnull
 	private final APSPRecord<N,E>[][] table;
 	
 	@SuppressWarnings("unchecked")
@@ -80,7 +89,7 @@ public class FloydWarshallAPSP<N,E> implements APSPResult<N,E> {
 		for(int i = 0; i < size; i++) {
 			N src = ids.getNode(i);
 			
-			Collection<E> edges = graph.getOutgoingEdges(src);
+			Collection<? extends E> edges = graph.getOutgoingEdges(src);
 			
 			for(E edge : edges) {
 				N tgt = graph.getTarget(edge);

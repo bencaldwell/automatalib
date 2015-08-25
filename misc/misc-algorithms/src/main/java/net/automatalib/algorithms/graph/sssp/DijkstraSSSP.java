@@ -1,24 +1,27 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.algorithms.graph.sssp;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.automatalib.algorithms.graph.GraphAlgorithms;
 import net.automatalib.commons.smartcollections.BinaryHeap;
@@ -33,21 +36,27 @@ import net.automatalib.graphs.concepts.EdgeWeights;
  * Implementation of Dijkstras algorithm for the single-source shortest path
  * problem.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  * @param <N> node class
  * @param <E> edge class
  */
+@ParametersAreNonnullByDefault
 public class DijkstraSSSP<N,E> implements SSSPResult<N,E> {
 	
 	/*
 	 * Internal data record
 	 */
+	@ParametersAreNonnullByDefault
 	private static final class Record<N,E> implements Comparable<Record<N,E>> {
+		@Nonnull
 		public final N node;
 		public float dist;
+		@Nullable
 		public ElementReference ref;
+		@Nullable
 		public E reach;
+		@Nullable
 		public Record<N,E> parent;
 		int depth;
 		
@@ -56,7 +65,7 @@ public class DijkstraSSSP<N,E> implements SSSPResult<N,E> {
 			this(node, dist, null, null);
 		}
 		
-		public Record(N node, float dist, E reach, Record<N,E> parent) {
+		public Record(N node, float dist, @Nullable E reach, @Nullable Record<N,E> parent) {
 			this.node = node;
 			this.dist = dist;
 			this.reach = reach;
@@ -80,6 +89,7 @@ public class DijkstraSSSP<N,E> implements SSSPResult<N,E> {
 	 * @param edgeWeights the edge weights
 	 * @return the single-source shortest path results
 	 */
+	@Nonnull
 	public static <N,E> SSSPResult<N,E> findSSSP(Graph<N,E> graph, N init, EdgeWeights<E> edgeWeights) {
 		DijkstraSSSP<N, E> dijkstra = new DijkstraSSSP<N, E>(graph, init, edgeWeights);
 		dijkstra.findSSSP();

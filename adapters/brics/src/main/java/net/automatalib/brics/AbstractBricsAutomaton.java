@@ -1,18 +1,17 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.brics;
 
@@ -21,12 +20,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import net.automatalib.automata.fsa.abstractimpl.AbstractFSA;
-import net.automatalib.automata.graphs.AbstractAutomatonGraph;
-import net.automatalib.commons.util.mappings.MutableMapping;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import net.automatalib.automata.fsa.FiniteStateAcceptor;
+import net.automatalib.automata.graphs.AbstractAutomatonGraphView;
 import net.automatalib.graphs.UniversalGraph;
-import net.automatalib.graphs.concepts.NodeIDs;
-import net.automatalib.graphs.dot.DOTPlottableGraph;
+import net.automatalib.graphs.concepts.GraphViewable;
 import net.automatalib.graphs.dot.GraphDOTHelper;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.State;
@@ -35,11 +35,12 @@ import dk.brics.automaton.Transition;
 /**
  * Base class for Brics automata adapters.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  */
-public abstract class AbstractBricsAutomaton extends AbstractFSA<State, Character> implements
-		DOTPlottableGraph<State, Transition>, UniversalGraph<State,Transition,Boolean,BricsTransitionProperty> {
+@ParametersAreNonnullByDefault
+public abstract class AbstractBricsAutomaton implements
+		FiniteStateAcceptor<State,Character>, GraphViewable {
 	
 	protected final Automaton automaton;
 
@@ -48,6 +49,9 @@ public abstract class AbstractBricsAutomaton extends AbstractFSA<State, Characte
 	 * @param automaton the Brics automaton object. 
 	 */
 	public AbstractBricsAutomaton(Automaton automaton) {
+		if(automaton == null) {
+			throw new IllegalArgumentException("Provided Brics automaton must not be null");
+		}
 		this.automaton = automaton;
 	}
 	
@@ -57,60 +61,6 @@ public abstract class AbstractBricsAutomaton extends AbstractFSA<State, Characte
 	 */
 	public Automaton getBricsAutomaton() {
 		return automaton;
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.Graph#getNodes()
-	 */
-	@Override
-	public Collection<State> getNodes() {
-		return AbstractAutomatonGraph.getNodes(this);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.Graph#nodeIDs()
-	 */
-	@Override
-	public NodeIDs<State> nodeIDs() {
-		return AbstractAutomatonGraph.nodeIDs(this);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#getOutgoingEdges(java.lang.Object)
-	 */
-	@Override
-	public Collection<Transition> getOutgoingEdges(State node) {
-		return node.getTransitions();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#getTarget(java.lang.Object)
-	 */
-	@Override
-	public State getTarget(Transition edge) {
-		return edge.getDest();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#createStaticNodeMapping()
-	 */
-	@Override
-	public <V> MutableMapping<State, V> createStaticNodeMapping() {
-		return AbstractAutomatonGraph.createStaticNodeMapping(this);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#createDynamicNodeMapping()
-	 */
-	@Override
-	public <V> MutableMapping<State, V> createDynamicNodeMapping() {
-		return AbstractAutomatonGraph.createDynamicNodeMapping(this);
 	}
 
 	/*
@@ -127,7 +77,7 @@ public abstract class AbstractBricsAutomaton extends AbstractFSA<State, Characte
 	 * @see net.automatalib.ts.TransitionSystem#getTransitions(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public Collection<State> getTransitions(State state, Character input) {
+	public Collection<State> getTransitions(State state, @Nonnull Character input) {
 		Collection<Transition> transitions = state.getSortedTransitions(false);
 		
 		Set<State> result = new HashSet<>();
@@ -161,31 +111,59 @@ public abstract class AbstractBricsAutomaton extends AbstractFSA<State, Characte
 	public Collection<State> getStates() {
 		return automaton.getStates();
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.dot.DOTPlottableGraph#getGraphDOTHelper()
-	 */
+	
 	@Override
-	public GraphDOTHelper<State, Transition> getGraphDOTHelper() {
-		return new BricsDOTHelper(this);
+	public GraphView graphView() {
+		return new GraphView();
+	}
+	
+	public class GraphView
+			extends
+			AbstractAutomatonGraphView<State, AbstractBricsAutomaton, Transition>
+			implements
+			UniversalGraph<State, Transition, Boolean, BricsTransitionProperty> {
+		public GraphView() {
+			super(AbstractBricsAutomaton.this);
+		}
+
+		@Override
+		public Collection<? extends Transition> getOutgoingEdges(State node) {
+			return node.getTransitions();
+		}
+
+		@Override
+		public State getTarget(Transition edge) {
+			return edge.getDest();
+		}
+
+		@Override
+		public GraphDOTHelper<State, Transition> getGraphDOTHelper() {
+			return new BricsDOTHelper(AbstractBricsAutomaton.this);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * net.automatalib.graphs.UniversalIndefiniteGraph#getNodeProperties
+		 * (java.lang.Object)
+		 */
+		@Override
+		public Boolean getNodeProperty(State node) {
+			return node.isAccept();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * net.automatalib.graphs.UniversalIndefiniteGraph#getEdgeProperties
+		 * (java.lang.Object)
+		 */
+		@Override
+		public BricsTransitionProperty getEdgeProperty(Transition edge) {
+			return new BricsTransitionProperty(edge);
+		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.UniversalIndefiniteGraph#getNodeProperties(java.lang.Object)
-	 */
-	@Override
-	public Boolean getNodeProperty(State node) {
-		return node.isAccept();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.graphs.UniversalIndefiniteGraph#getEdgeProperties(java.lang.Object)
-	 */
-	@Override
-	public BricsTransitionProperty getEdgeProperty(Transition edge) {
-		return new BricsTransitionProperty(edge);
-	}
 }

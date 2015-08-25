@@ -1,25 +1,21 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.brics;
 
-import java.util.Collection;
-
 import net.automatalib.automata.fsa.NFA;
-import net.automatalib.automata.fsa.abstractimpl.AbstractNFA;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.State;
 
@@ -33,7 +29,7 @@ import dk.brics.automaton.State;
  * {@link Automaton} will always work. However, determining successor states for input
  * characters might be much less efficient than when using a {@link BricsDFA}.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  */
 public class BricsNFA extends AbstractBricsAutomaton implements
@@ -46,23 +42,4 @@ public class BricsNFA extends AbstractBricsAutomaton implements
 	public BricsNFA(Automaton automaton) {
 		super(automaton);
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.ts.acceptors.AcceptorTS#accepts(java.lang.Iterable)
-	 */
-	@Override
-	public boolean accepts(Iterable<Character> input) {
-		return AbstractNFA.accepts(this, input);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.fsa.NFA#isAccepting(java.util.Collection)
-	 */
-	@Override
-	public boolean isAccepting(Collection<? extends State> states) {
-		return AbstractNFA.isAccepting(this, states);
-	}
-
 }

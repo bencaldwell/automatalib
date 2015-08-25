@@ -1,36 +1,43 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.words;
+
+import com.google.common.base.Function;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
+
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * The empty word.
- * 
+ * <p>
  * This class has no type parameter, as there are no non-<tt>null</tt> instances
  * of the symbol class involved. Hence, Java's generic mechanism allows to maintain
  * only a single instance of this class. 
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  * @see Collections#emptyList()
  */
+@ParametersAreNonnullByDefault
 final class EmptyWord extends Word<Object> {
 	
 	public static final EmptyWord INSTANCE
@@ -42,7 +49,7 @@ final class EmptyWord extends Word<Object> {
 	 */
 	@Override
 	public Object getSymbol(int index) {
-		return null;
+		throw new IndexOutOfBoundsException(Integer.toString(index));
 	}
 
 	/*
@@ -115,7 +122,7 @@ final class EmptyWord extends Word<Object> {
 	 * @see net.automatalib.words.Word#isPrefixOf(net.automatalib.words.Word)
 	 */
 	@Override
-	public boolean isPrefixOf(Word<Object> other) {
+	public boolean isPrefixOf(Word<?> other) {
 		return true;
 	}
 
@@ -124,7 +131,7 @@ final class EmptyWord extends Word<Object> {
 	 * @see net.automatalib.words.Word#longestCommonPrefix(net.automatalib.words.Word)
 	 */
 	@Override
-	public Word<Object> longestCommonPrefix(Word<Object> other) {
+	public Word<Object> longestCommonPrefix(Word<?> other) {
 		return this;
 	}
 
@@ -133,7 +140,7 @@ final class EmptyWord extends Word<Object> {
 	 * @see net.automatalib.words.Word#isSuffixOf(net.automatalib.words.Word)
 	 */
 	@Override
-	public boolean isSuffixOf(Word<Object> other) {
+	public boolean isSuffixOf(Word<?> other) {
 		return true;
 	}
 
@@ -142,7 +149,7 @@ final class EmptyWord extends Word<Object> {
 	 * @see net.automatalib.words.Word#longestCommonSuffix(net.automatalib.words.Word)
 	 */
 	@Override
-	public Word<Object> longestCommonSuffix(Word<Object> other) {
+	public Word<Object> longestCommonSuffix(Word<?> other) {
 		return this;
 	}
 	
@@ -171,6 +178,16 @@ final class EmptyWord extends Word<Object> {
 	public Word<Object> trimmed() {
 		return this;
 	}
+
+	@Nonnull
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> Word<T> transform(Function<? super Object,? extends T> transformer) {
+		return (Word<T>)this;
+	}
 	
-	
+	@Override
+    public Spliterator<Object> spliterator() {
+		return Spliterators.emptySpliterator();
+    }
 }

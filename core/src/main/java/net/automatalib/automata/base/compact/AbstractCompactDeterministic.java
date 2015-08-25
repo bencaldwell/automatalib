@@ -1,36 +1,32 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.automata.base.compact;
 
 import java.util.Collection;
 
-import net.automatalib.automata.FiniteAlphabetAutomaton;
-import net.automatalib.automata.abstractimpl.AbstractMutableDeterministic;
+import net.automatalib.automata.MutableDeterministic;
+import net.automatalib.automata.UniversalFiniteAlphabetAutomaton;
 import net.automatalib.automata.concepts.StateIDs;
-import net.automatalib.automata.graphs.AbstractAutomatonGraph;
-import net.automatalib.commons.util.Pair;
 import net.automatalib.commons.util.collections.CollectionsUtil;
-import net.automatalib.commons.util.mappings.MutableMapping;
-import net.automatalib.graphs.Graph;
-import net.automatalib.graphs.concepts.NodeIDs;
 import net.automatalib.words.Alphabet;
 
-public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
-		AbstractMutableDeterministic<Integer, I, T, SP, TP> implements StateIDs<Integer>, FiniteAlphabetAutomaton<Integer,I,T>, Graph<Integer,Pair<I,T>> {
+public abstract class AbstractCompactDeterministic<I, T, SP, TP>
+		implements MutableDeterministic<Integer,I,T,SP,TP>, StateIDs<Integer>, UniversalFiniteAlphabetAutomaton<Integer,I,T,SP,TP>,
+		MutableDeterministic.StateIntAbstraction<I, T, SP, TP>,
+		MutableDeterministic.FullIntAbstraction<T, SP, TP> {
 
 	public static final float DEFAULT_RESIZE_FACTOR = 1.5f;
 	public static final int DEFAULT_INIT_CAPACITY = 11;
@@ -92,6 +88,11 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 		ensureCapacity();
 	}
 	
+	@Override
+	public int size() {
+		return numStates;
+	}
+	
 	public void setInitialState(int stateId) {
 		initial = stateId;
 	}
@@ -103,6 +104,22 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 	
 	public void setTransition(int state, int inputIdx, T trans) {
 		transitions[state * alphabetSize + inputIdx] = trans;
+	}
+	
+	public void setTransition(int state, I input, T trans) {
+		setTransition(state, alphabet.getSymbolIndex(input), trans);
+	}
+	
+	public void setTransition(int stateId, int inputIdx, int succId) {
+		setTransition(stateId, inputIdx, succId, null);
+	}
+	
+	public void setTransition(int stateId, int inputIdx, int succId, TP property) {
+		setTransition(stateId, inputIdx, createTransition(succId, property));
+	}
+	
+	public void setTransition(int stateId, I input, int succId, TP property) {
+		setTransition(stateId, input, createTransition(succId, property));
 	}
 	
 	@Override
@@ -125,8 +142,6 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 	
 	public abstract T copyTransition(T trans, int succId);
 	
-	public abstract int getIntSuccessor(T transition);
-
 	@Override
 	public final Integer getSuccessor(T transition) {
 		return makeId(getIntSuccessor(transition));
@@ -134,7 +149,7 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 
 	@Override
 	public Collection<Integer> getStates() {
-		return CollectionsUtil.rangeList(0, numStates);
+		return CollectionsUtil.intRange(0, numStates);
 	}
 
 	@Override
@@ -147,6 +162,7 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 		return state.intValue();
 	}
 
+	@Override
 	public int getIntInitialState() {
 		return initial;
 	}
@@ -192,6 +208,20 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 		return newState;
 	}
 	
+	public int addIntInitialState(SP property) {
+		int newState = addIntState(property);
+		setInitialState(newState);
+		return newState;
+	}
+	
+	public int addIntInitialState() {
+		return addIntInitialState(null);
+	}
+	
+	public int addIntState() {
+		return addIntState(null);
+	}
+	
 	public int addIntState(SP property) {
 		int newState = createState();
 		setStateProperty(newState, property);
@@ -232,63 +262,27 @@ public abstract class AbstractCompactDeterministic<I, T, SP, TP> extends
 	public Alphabet<I> getInputAlphabet() {
 		return alphabet;
 	}
-
-
-
-	/* (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#getOutgoingEdges(java.lang.Object)
-	 */
+	
 	@Override
-	public Collection<Pair<I, T>> getOutgoingEdges(Integer node) {
-		return AbstractAutomatonGraph.getOutgoingEdges(this, node);
-	}
-
-
-
-	/* (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#getTarget(java.lang.Object)
-	 */
-	@Override
-	public Integer getTarget(Pair<I, T> edge) {
-		return AbstractAutomatonGraph.getTarget(this, edge);
-	}
-
-
-	/* (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#createStaticNodeMapping()
-	 */
-	@Override
-	public <V> MutableMapping<Integer, V> createStaticNodeMapping() {
-		return AbstractAutomatonGraph.createStaticNodeMapping(this);
-	}
-
-	/* (non-Javadoc)
-	 * @see net.automatalib.graphs.IndefiniteGraph#createDynamicNodeMapping()
-	 */
-	@Override
-	public <V> MutableMapping<Integer, V> createDynamicNodeMapping() {
-		return AbstractAutomatonGraph.createDynamicNodeMapping(this);
-	}
-
-	/* (non-Javadoc)
-	 * @see net.automatalib.graphs.Graph#getNodes()
-	 */
-	@Override
-	public Collection<Integer> getNodes() {
-		return AbstractAutomatonGraph.getNodes(this);
-	}
-
-
-	/* (non-Javadoc)
-	 * @see net.automatalib.graphs.Graph#nodeIDs()
-	 */
-	@Override
-	public NodeIDs<Integer> nodeIDs() {
-		return AbstractAutomatonGraph.nodeIDs(this);
+	public StateIntAbstraction<I,T,SP,TP> stateIntAbstraction() {
+		return this;
 	}
 	
+	@Override
+	public FullIntAbstraction<T,SP,TP> fullIntAbstraction(Alphabet<I> alphabet) {
+		if (alphabet == this.alphabet) {
+			return this;
+		}
+		return MutableDeterministic.super.fullIntAbstraction(alphabet);
+	}
 	
-	
+	public FullIntAbstraction<T,SP,TP> fullIntAbstraction() {
+		return this;
+	}
 
+	@Override
+	public int numInputs() {
+		return alphabet.size();
+	}
 	
 }

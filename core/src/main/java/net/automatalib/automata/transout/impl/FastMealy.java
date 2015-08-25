@@ -1,45 +1,36 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.automata.transout.impl;
 
-import java.util.List;
-
 import net.automatalib.automata.base.fast.FastMutableDet;
-import net.automatalib.automata.dot.DOTHelperMealy;
-import net.automatalib.automata.dot.DOTPlottableAutomaton;
 import net.automatalib.automata.transout.MutableMealyMachine;
-import net.automatalib.automata.transout.abstractimpl.AbstractTransOutAutomaton;
-import net.automatalib.commons.util.Pair;
-import net.automatalib.graphs.dot.GraphDOTHelper;
 import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
 
 
 
 /**
  * A fast implementation of a Mealy machine.
  * 
- * @author Malte Isberner <malte.isberner@cs.uni-dortmund.de>
+ * @author Malte Isberner 
  *
  * @param <I> input symbol class.
  * @param <O> output symbol class.
  */
 public class FastMealy<I,O> extends FastMutableDet<FastMealyState<O>,I,MealyTransition<FastMealyState<O>,O>,Void,O>
-        implements MutableMealyMachine<FastMealyState<O>, I, MealyTransition<FastMealyState<O>,O>, O>, DOTPlottableAutomaton<FastMealyState<O>,I,MealyTransition<FastMealyState<O>,O>> {
+        implements MutableMealyMachine<FastMealyState<O>, I, MealyTransition<FastMealyState<O>,O>, O> {
 
 
 	/**
@@ -63,24 +54,6 @@ public class FastMealy<I,O> extends FastMutableDet<FastMealyState<O>,I,MealyTran
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.ls5.automata.transout.TransitionOutputAutomaton#trace(java.lang.Iterable, java.util.List)
-	 */
-	@Override
-	public void trace(Iterable<I> input, List<O> output) {
-		AbstractTransOutAutomaton.trace(this, input, output);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.automata.transout.TransitionOutputAutomaton#trace(java.lang.Object, java.lang.Iterable, java.util.List)
-	 */
-	@Override
-	public void trace(FastMealyState<O> state, Iterable<I> input, List<O> output) {
-		AbstractTransOutAutomaton.trace(this, state, input, output);
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see de.ls5.automata.features.TransitionOutput#getTransitionOutput(java.lang.Object)
 	 */
 	@Override
@@ -88,44 +61,7 @@ public class FastMealy<I,O> extends FastMutableDet<FastMealyState<O>,I,MealyTran
 			MealyTransition<FastMealyState<O>, O> transition) {
 		return transition.getOutput();
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.ts.UniversalTransitionSystem#getStateProperty(java.lang.Object)
-	 */
-	@Override
-	public Void getStateProperty(FastMealyState<O> state) {
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.ts.UniversalTransitionSystem#getTransitionProperty(java.lang.Object)
-	 */
-	@Override
-	public O getTransitionProperty(
-			MealyTransition<FastMealyState<O>, O> transition) {
-		return transition.getOutput();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.automata.MutableAutomaton#setStateProperty(java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setStateProperty(FastMealyState<O> state, Void property) {
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.automata.MutableAutomaton#setTransitionProperty(java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setTransitionProperty(
-			MealyTransition<FastMealyState<O>, O> transition, O property) {
-		transition.setOutput(property);
-	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see de.ls5.automata.MutableAutomaton#createTransition(java.lang.Object, java.lang.Object)
@@ -134,16 +70,6 @@ public class FastMealy<I,O> extends FastMutableDet<FastMealyState<O>,I,MealyTran
 	public MealyTransition<FastMealyState<O>, O> createTransition(
 			FastMealyState<O> successor, O properties) {
 		return new MealyTransition<FastMealyState<O>, O>(successor, properties);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.automata.MutableAutomaton#copyTransition(java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public MealyTransition<FastMealyState<O>, O> copyTransition(
-			MealyTransition<FastMealyState<O>, O> trans, FastMealyState<O> succ) {
-		return new MealyTransition<FastMealyState<O>,O>(succ, trans.getOutput());
 	}
 
 	/*
@@ -163,43 +89,5 @@ public class FastMealy<I,O> extends FastMutableDet<FastMealyState<O>,I,MealyTran
 	@Override
 	protected FastMealyState<O> createState(Void property) {
 		return new FastMealyState<O>(inputAlphabet.size());
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.automata.features.SODetOutputAutomaton#computeSuffixOutput(java.lang.Iterable, java.lang.Iterable)
-	 */
-	@Override
-	public Word<O> computeSuffixOutput(Iterable<I> prefix, Iterable<I> suffix) {
-		return AbstractTransOutAutomaton.computeSuffixOutput(this, prefix, suffix);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.ls5.automata.features.OutputAutomaton#computeOutput(java.lang.Iterable)
-	 */
-	@Override
-	public Word<O> computeOutput(Iterable<I> input) {
-		return AbstractTransOutAutomaton.computeOutput(this, input);
-	}
-	
-	@Override
-	public FastMealyState<O> addInitialState() {
-		return addInitialState(null);
-	}
-	
-	@Override
-	public FastMealyState<O> addState() {
-		return addState(null);
-	}
-
-	@Override
-	public O getOutput(FastMealyState<O> state, I input) {
-		return AbstractTransOutAutomaton.getOutput(this, state, input);
-	}
-
-	@Override
-	public GraphDOTHelper<FastMealyState<O>, Pair<I, MealyTransition<FastMealyState<O>, O>>> getDOTHelper() {
-		return new DOTHelperMealy<FastMealyState<O>, I, MealyTransition<FastMealyState<O>,O>, O>(this);
 	}
 }

@@ -1,34 +1,41 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2015 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.words;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
+import java.util.function.IntFunction;
+import java.util.function.ToIntFunction;
+
+import javax.annotation.Nullable;
+
+import net.automatalib.commons.util.array.ArrayWritable;
+import net.automatalib.commons.util.mappings.Mapping;
 
 /**
  * Class implementing an (indexed) alphabet. An alphabet is a collection of symbols, where
  * each symbol has a (unique) index. Apart from serving as a collection, this class also provides
  * a one-to-one mapping between symbols and indices.
  * 
- * @param <I> symbol class.
+ * @param <I> symbol type
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  */
-public interface Alphabet<I> extends Collection<I>, Comparator<I> {
+public interface Alphabet<I> extends ArrayWritable<I>, Collection<I>, Comparator<I>, IntFunction<I>, ToIntFunction<I> {
 
     /**
      * Returns the symbol with the given index in this alphabet.
@@ -36,6 +43,7 @@ public interface Alphabet<I> extends Collection<I>, Comparator<I> {
      * @return symbol with the given index. 
      * @throws IllegalArgumentException if there is no symbol with this index.
      */
+	@Nullable
     public abstract I getSymbol(int index) throws IllegalArgumentException;
     
     /**
@@ -44,5 +52,58 @@ public interface Alphabet<I> extends Collection<I>, Comparator<I> {
      * @return
      * @throws IllegalArgumentException if the provided symbol does not belong to the alphabet.
      */
-    public abstract int getSymbolIndex(I symbol) throws IllegalArgumentException;
+    public abstract int getSymbolIndex(@Nullable I symbol) throws IllegalArgumentException;
+    
+    @Override
+    default public I apply(int index) {
+    	return getSymbol(index);
+    }
+    
+    @Override
+    default public int applyAsInt(I symbol) {
+    	return getSymbolIndex(symbol);
+    }
+    
+    @Override
+	default public int compare(I o1, I o2) {
+		return getSymbolIndex(o1) - getSymbolIndex(o2);
+	}
+
+	@Override
+	default public void writeToArray(int offset, Object[] array, int tgtOfs, int num) {
+		for(int i = offset, j = tgtOfs, k = 0; k < num; i++, j++, k++) {
+			array[j] = getSymbol(i);
+		}
+	}
+	
+	default public <I2>
+	Mapping<I2,I> translateFrom(Alphabet<I2> other) {
+		if (other.size() > size()) {
+			throw new IllegalArgumentException("Cannot translate from an alphabet with " + other.size() +
+					" elements into an alphabet with only " + size() + " elements");
+		}
+		return i -> getSymbol(other.getSymbolIndex(i));
+	}
+	
+	/**
+	 * Checks whether the given symbol is part of the alphabet.
+	 * <p>
+	 * <b>Caution:</b> the default implementation is rather inefficient and should
+	 * be overridden, if possible.
+	 * 
+	 * @param symbol the symbol to check 
+	 * @return {@code true} iff the symbol is part of the alphabet
+	 */
+	default public boolean containsSymbol(I symbol) {
+		try {
+			int index = getSymbolIndex(symbol);
+			if (index < 0 || index >= size()) {
+				return false;
+			}
+			return Objects.equals(symbol, getSymbol(index));
+		}
+		catch (IllegalArgumentException ex) {
+			return false;
+		}
+	}
 }

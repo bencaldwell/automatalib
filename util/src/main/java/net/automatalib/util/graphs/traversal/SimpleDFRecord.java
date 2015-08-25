@@ -1,23 +1,21 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.util.graphs.traversal;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 
 import net.automatalib.graphs.IndefiniteGraph;
@@ -26,8 +24,7 @@ import net.automatalib.graphs.IndefiniteGraph;
 class SimpleDFRecord<N, E> {
 	public final N node;
 	
-	private Iterator<E> edgeIterator;
-	private E retractedEdge = null;
+	private Iterator<? extends E> edgeIterator;
 
 
 	public SimpleDFRecord(N node) {
@@ -41,30 +38,23 @@ class SimpleDFRecord<N, E> {
 	public final boolean start(IndefiniteGraph<N,E> graph) {
 		if(edgeIterator != null)
 			return false;
-		Collection<E> outEdges = graph.getOutgoingEdges(node);
-		if(outEdges == null)
-			this.edgeIterator = Collections.<E>emptySet().iterator();
-		else
-			this.edgeIterator = outEdges.iterator();
+		Collection<? extends E> outEdges = graph.getOutgoingEdges(node);
+		this.edgeIterator = outEdges.iterator();
 		return true;
 	}
 	
 	public final boolean hasNextEdge() {
-		return (retractedEdge != null) || edgeIterator != null && edgeIterator.hasNext();
+		if(edgeIterator == null) {
+			throw new IllegalStateException("Edge iteration not yet started");
+		}
+		return edgeIterator.hasNext();
 	}
 	
 	public final E nextEdge() {
-		if(retractedEdge != null) {
-			E tmp = retractedEdge;
-			retractedEdge = null;
-			return tmp;
+		if(edgeIterator == null) {
+			throw new IllegalStateException("Edge iteration not yet started");
 		}
 		return edgeIterator.next();
-	}
-	
-	public final void retract(E edge) {
-		assert retractedEdge == null;
-		retractedEdge = edge;
 	}
 
 }

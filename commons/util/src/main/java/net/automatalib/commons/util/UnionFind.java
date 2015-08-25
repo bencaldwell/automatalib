@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.util;
 
@@ -21,7 +20,7 @@ package net.automatalib.commons.util;
  * on a fixed-range integer domain.
  * 
  * @author fhowar
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  */
 public final class UnionFind {
 
@@ -43,6 +42,9 @@ public final class UnionFind {
 		}
 	}
 
+	public int size() {
+		return p.length;
+	}
 	/**
 	 * Unites the sets containing the two given elements.
 	 * @param p the first element
@@ -61,13 +63,15 @@ public final class UnionFind {
 	 * @return the identifier of the resulting set (either <tt>x</tt> or <tt>y</tt>)
 	 */
 	public int link(int x, int y) {
-		if(rank[x] > rank[y]) {
+		int rx = rank[x], ry = rank[y];
+		if(rx > ry) {
 			p[y] = x;
 			return x;
 		}
 		p[x] = y;
-		if(rank[x] == rank[y])
-			rank[y]++;
+		if(rx == ry) {
+			rank[y] = ry + 1;
+		}
 		return y;
 	}
 
@@ -77,22 +81,20 @@ public final class UnionFind {
 	 * @return the identifier of the set which contains the given element
 	 */
 	public int find(int x) {
-		int r = p[x];
-		if(x != r)
-			p[x] = r = find(r);
-
-		return r;
+		int curr = x;
+		int currp = p[curr];
+		while (curr != currp) {
+			curr = currp;
+			currp = p[curr];
+		}
+		int ancestor = curr;
+		curr = x;
+		while (curr != ancestor) {
+			int next = p[curr];
+			p[curr] = ancestor;
+			curr = next;
+		}
+		
+		return ancestor;
 	}
-
-	// public synchronized boolean findAndUnite(int x, int y)
-	// {
-	// int r1 = find(x);
-	// int r2 = find(y);
-	//
-	// if (r1 == r2)
-	// return false;
-	//
-	// union(r1, r2);
-	// return true;
-	// }
 }

@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.util.ts.traversal;
 
@@ -27,28 +26,27 @@ class SimpleDFRecord<S, I, T> {
 
 	private final Iterator<? extends I> inputsIterator;
 	private I input;
-	private Iterator<T> transitionIterator;
-	private T retractedTransition;
+	private Iterator<? extends T> transitionIterator;
 
 	public SimpleDFRecord(S state, Collection<? extends I> inputs) {
 		this.state = state;
 		this.inputsIterator = inputs.iterator();
 	}
 
-	private void findNext(TransitionSystem<S,I,T> ts) {
+	private void findNext(TransitionSystem<S,? super I,T> ts) {
 		if(transitionIterator != null && transitionIterator.hasNext())
 			return;
 		while(inputsIterator.hasNext()) {
 			input = inputsIterator.next();
-			Collection<T> transitions = ts.getTransitions(state, input);
-			if(transitions != null && !transitions.isEmpty()) {
+			Collection<? extends T> transitions = ts.getTransitions(state, input);
+			if(!transitions.isEmpty()) {
 				transitionIterator = transitions.iterator();
 				break;
 			}
 		}
 	}
 
-	public boolean start(TransitionSystem<S, I, T> ts) {
+	public boolean start(TransitionSystem<S, ? super I, T> ts) {
 		if(transitionIterator != null)
 			return false;
 		
@@ -56,22 +54,22 @@ class SimpleDFRecord<S, I, T> {
 		return true;
 	}
 
-	public boolean hasNextTransition() {
-		if(retractedTransition != null)
-			return true;
-		
+	public boolean hasNextTransition(TransitionSystem<S,? super I,T> ts) {
 		if(transitionIterator == null)
 			return false;
+		if(!transitionIterator.hasNext()) {
+			findNext(ts);
+		}
 		return transitionIterator.hasNext();
 	}
 
-	public void advance(TransitionSystem<S,I,T> ts) {
+	public void advance(TransitionSystem<S,? super I,T> ts) {
 		if(transitionIterator.hasNext())
 			return;
 		findNext(ts);
 	}
 
-	public void advanceInput(TransitionSystem<S,I,T> ts) {
+	public void advanceInput(TransitionSystem<S,? super I,T> ts) {
 		transitionIterator = null;
 		findNext(ts);
 	}

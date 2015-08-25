@@ -1,29 +1,29 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.util.nid;
 
 import java.util.AbstractList;
 import java.util.Iterator;
 
+import net.automatalib.commons.util.array.ArrayWritable;
 import net.automatalib.commons.util.array.ResizingObjectArray;
 
 
 public class DynamicList<T extends MutableNumericID> extends
-		AbstractList<T> {
+		AbstractList<T> implements ArrayWritable<T> {
 	
 	private final ResizingObjectArray storage
 		= new ResizingObjectArray();
@@ -156,6 +156,11 @@ public class DynamicList<T extends MutableNumericID> extends
 		for(int i = 0; i < size; i++)
 			storage.array[i] = null;
 		size = 0;
+	}
+
+	@Override
+	public void writeToArray(int offset, Object[] array, int tgtOfs, int num) {
+		System.arraycopy(storage.array, offset, array, tgtOfs, num);
 	}
 
 }

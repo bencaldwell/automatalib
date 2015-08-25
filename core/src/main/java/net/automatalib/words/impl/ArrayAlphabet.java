@@ -1,0 +1,64 @@
+/* Copyright (C) 2013 TU Dortmund
+ * This file is part of AutomataLib, http://www.automatalib.net/.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package net.automatalib.words.impl;
+
+import java.util.Objects;
+
+import net.automatalib.words.abstractimpl.AbstractAlphabet;
+
+public class ArrayAlphabet<I> extends AbstractAlphabet<I> {
+
+	protected final I[] symbols;
+	
+	@SafeVarargs
+	public ArrayAlphabet(I ...symbols) {
+		this.symbols = symbols;
+	}
+
+	@Override
+	public I getSymbol(int index) throws IllegalArgumentException {
+		return symbols[index];
+	}
+
+	@Override
+	public int getSymbolIndex(I symbol) throws IllegalArgumentException {
+		for(int i = 0; i < symbols.length; i++) {
+			if(Objects.equals(symbols[i], symbol))
+				return i;
+		}
+		return -1;
+	}
+
+	@Override
+	public int size() {
+		return symbols.length;
+	}
+
+	/* (non-Javadoc)
+	 * @see net.automatalib.words.abstractimpl.AbstractAlphabet#writeToArray(int, java.lang.Object[], int, int)
+	 */
+	@Override
+	public void writeToArray(int offset, Object[] array, int tgtOfs, int num) {
+		System.arraycopy(symbols, offset, array, tgtOfs, num);
+	}
+	
+	@Override
+	public boolean containsSymbol(I symbol) {
+		return getSymbolIndex(symbol) != -1;
+	}
+	
+
+}

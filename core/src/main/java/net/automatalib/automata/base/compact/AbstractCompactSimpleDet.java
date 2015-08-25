@@ -1,55 +1,47 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.automata.base.compact;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 
-import net.automatalib.automata.FiniteAlphabetAutomaton;
-import net.automatalib.automata.abstractimpl.AbstractMutableDeterministic;
-import net.automatalib.automata.base.StateIDGrowingMapping;
-import net.automatalib.automata.base.StateIDStaticMapping;
+import net.automatalib.automata.MutableDeterministic;
+import net.automatalib.automata.UniversalFiniteAlphabetAutomaton;
 import net.automatalib.automata.concepts.StateIDs;
-import net.automatalib.automata.dot.DefaultDOTHelperAutomaton;
-import net.automatalib.automata.graphs.AbstractAutomatonGraph;
-import net.automatalib.commons.util.Pair;
 import net.automatalib.commons.util.collections.CollectionsUtil;
-import net.automatalib.commons.util.mappings.MutableMapping;
-import net.automatalib.graphs.UniversalGraph;
-import net.automatalib.graphs.concepts.NodeIDs;
-import net.automatalib.graphs.dot.DOTPlottableGraph;
-import net.automatalib.graphs.dot.GraphDOTHelper;
 import net.automatalib.words.Alphabet;
 
-public abstract class AbstractCompactSimpleDet<I, SP> extends
-		AbstractMutableDeterministic<Integer, I, Integer, SP, Void>
-		implements UniversalGraph<Integer,Pair<I,Integer>,SP,Pair<I,Void>>,
-		FiniteAlphabetAutomaton<Integer,I,Integer>, StateIDs<Integer>,
-		NodeIDs<Integer>, DOTPlottableGraph<Integer, Pair<I,Integer>> {
+public abstract class AbstractCompactSimpleDet<I, SP>
+		implements MutableDeterministic<Integer,I,Integer,SP,Void>,
+		UniversalFiniteAlphabetAutomaton<Integer,I,Integer,SP,Void>,
+		StateIDs<Integer>,
+		MutableDeterministic.StateIntAbstraction<I, Integer, SP, Void>,
+		MutableDeterministic.FullIntAbstraction<Integer, SP, Void> {
 
 	public static final float DEFAULT_RESIZE_FACTOR = 1.5f;
 	public static final int DEFAULT_INIT_CAPACITY = 11;
 	
-	private final Alphabet<I> alphabet;
-	private final int alphabetSize;
-	private int[] transitions;
-	private int stateCapacity;
-	private int numStates;
-	private int initial = -1;
-	private final float resizeFactor;
+	protected final Alphabet<I> alphabet;
+	protected final int alphabetSize;
+	protected int[] transitions;
+	protected int stateCapacity;
+	protected int numStates;
+	protected int initial = -1;
+	protected final float resizeFactor;
 	
 	public AbstractCompactSimpleDet(Alphabet<I> alphabet) {
 		this(alphabet, DEFAULT_INIT_CAPACITY, DEFAULT_RESIZE_FACTOR);
@@ -67,8 +59,33 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 		this.alphabet = alphabet;
 		this.alphabetSize = alphabet.size();
 		this.transitions = new int[stateCapacity * alphabetSize];
+		Arrays.fill(this.transitions, 0, this.transitions.length, -1);
 		this.resizeFactor = resizeFactor;
 		this.stateCapacity = stateCapacity;
+	}
+	
+	protected AbstractCompactSimpleDet(Alphabet<I> alphabet, int numStates, int initial, int[] transitions,
+			float resizeFactor) {
+		this.alphabet = alphabet;
+		this.alphabetSize = alphabet.size();
+		this.numStates = numStates;
+		if (initial < 0 || initial >= numStates) {
+			throw new IllegalArgumentException("Invalid initial state " + initial + " for automaton with "
+					+ numStates + " states");
+		}
+		this.initial = initial;
+		if (transitions.length < numStates * alphabetSize) {
+			throw new IllegalArgumentException("Transition array is not large enough for automaton with "
+					+ numStates + " states");
+		}
+		this.transitions = transitions;
+		this.stateCapacity = transitions.length / alphabetSize;
+		this.resizeFactor = resizeFactor;
+	}
+	
+	
+	protected AbstractCompactSimpleDet(Alphabet<I> alphabet, AbstractCompactSimpleDet<?,?> other) {
+		this(alphabet, other.numStates, other.initial, other.transitions.clone(), other.resizeFactor);
 	}
 	
 	public void ensureCapacity(int newCapacity) {
@@ -81,6 +98,7 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 		
 		int[] newTrans = new int[newCap * alphabetSize];
 		System.arraycopy(transitions, 0, newTrans, 0, stateCapacity * alphabetSize);
+		Arrays.fill(newTrans, this.transitions.length, newTrans.length, -1);
 		this.transitions = newTrans;
 		ensureCapacity(stateCapacity, newCap);
 		this.stateCapacity = newCap;
@@ -109,7 +127,7 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 	 */
 	@Override
 	public Collection<Integer> getStates() {
-		return CollectionsUtil.rangeList(0, numStates);
+		return CollectionsUtil.intRange(0, numStates);
 	}
 
 	/*
@@ -136,7 +154,11 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 	 */
 	@Override
 	public Integer getInitialState() {
-		return (initial != -1) ? Integer.valueOf(initial) : null;
+		return wrapState(initial);
+	}
+	
+	public int getIntInitialState() {
+		return initial;
 	}
 
 	/*
@@ -145,11 +167,17 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 	 */
 	@Override
 	public Integer getTransition(Integer state, I input) {
-		int transId = state.intValue() * alphabetSize + alphabet.getSymbolIndex(input);
-		int succId = transitions[transId];
-		if(succId == 0)
-			return null;
-		return succId - 1;
+		int trans = getIntTransition(state.intValue(), input);
+		return wrapState(trans);
+	}
+	
+	public int getIntTransition(int state, int input) {
+		int transId = state * alphabetSize + input;
+		return transitions[transId];
+	}
+	
+	public int getIntTransition(int state, I input) {
+		return getIntTransition(state, alphabet.getSymbolIndex(input));
 	}
 
 	public void setInitialState(int state) {
@@ -162,7 +190,7 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 	}
 	
 	public void setTransition(int state, int inputIdx, int succ) {
-		transitions[state * alphabetSize + inputIdx] = succ + 1;
+		transitions[state * alphabetSize + inputIdx] = succ;
 	}
 	
 	public void setTransition(int state, I input, int succ) {
@@ -174,13 +202,17 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 		int succId = (transition != null) ? transition.intValue() : -1;
 		setTransition(state.intValue(), input, succId);
 	}
+	
+	@Override
+	public void setTransition(Integer state, I input, Integer transition, Void property) {
+		setTransition(state, input, transition);
+	}
 
 	@Override
 	public void clear() {
 		int endIdx = numStates * alphabetSize;
 		numStates = 0;
-		for(int i = 0; i < endIdx; i++)
-			transitions[i] = 0;
+		Arrays.fill(transitions, 0, endIdx, -1);
 		initial = -1;
 	}
 
@@ -188,8 +220,7 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 	public void removeAllTransitions(int state) {
 		int base = state * alphabetSize;
 		
-		for(int i = 0; i < alphabetSize; i++)
-			transitions[base++] = 0;
+		Arrays.fill(transitions, base, base + alphabetSize, -1);
 	}
 	
 	@Override
@@ -205,6 +236,15 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 	@Override
 	public Integer getSuccessor(Integer transition) {
 		return transition;
+	}
+	
+	public int getIntSuccessor(int state, I input) {
+		return getIntTransition(state, input);
+	}
+	
+	@Override
+	public int getSuccessor(int state, I input) {
+		return getIntTransition(state, input);
 	}
 	
 	public abstract SP getStateProperty(int stateId);
@@ -223,13 +263,27 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 		return null;
 	}
 	
-	public abstract void initState(int stateId, SP property);
+	protected abstract void initState(int stateId, SP property);
 
 	public int addIntState(SP property) {
 		int stateId = numStates++;
 		ensureCapacity(numStates);
 		initState(stateId, property);
 		return stateId;
+	}
+	
+	public int addIntState() {
+		return addIntState(null);
+	}
+	
+	public int addIntInitialState(SP property) {
+		int state = addIntState(property);
+		setInitialState(state);
+		return state;
+	}
+	
+	public int addIntInitialState() {
+		return addIntInitialState(null);
 	}
 	
 	@Override
@@ -261,67 +315,118 @@ public abstract class AbstractCompactSimpleDet<I, SP> extends
 		return successor;
 	}
 	
+	@Override
+	public Integer createTransition(int successor, Void property) {
+		return wrapState(successor);
+	}
+	
 	
 	@Override
 	public StateIDs<Integer> stateIDs() {
 		return this;
 	}
 
+	public int getIntSuccessor(int state, Iterable<? extends I> input) {
+		int current = state;
+		
+		Iterator<? extends I> inputIt = input.iterator();
+		
+		while(current >= 0 && inputIt.hasNext()) {
+			current = getIntSuccessor(current, inputIt.next());
+		}
+		
+		return current;
+	}
+	
 	@Override
-	public SP getNodeProperty(Integer node) {
-		return getStateProperty(node);
+	public Integer getSuccessor(Integer state, Iterable<? extends I> input) {
+		return wrapState(getIntSuccessor(state.intValue(), input));
 	}
 
-	@Override
-	public Pair<I, Void> getEdgeProperty(Pair<I, Integer> edge) {
-		return Pair.make(edge.getFirst(), null);
+	
+	public int getIntState(Iterable<? extends I> input) {
+		return getIntSuccessor(initial, input);
 	}
-
 	@Override
-	public Collection<Pair<I, Integer>> getOutgoingEdges(Integer node) {
-		return AbstractAutomatonGraph.getOutgoingEdges(this, node);
+	public Integer getState(Iterable<? extends I> input) {
+		return wrapState(getIntState(input));
 	}
-
+	
 	@Override
-	public Integer getTarget(Pair<I, Integer> edge) {
-		return edge.getSecond();
-	}
-
-	@Override
-	public <V> MutableMapping<Integer, V> createStaticNodeMapping() {
-		return new StateIDStaticMapping<>(this, numStates);
-	}
-
-	@Override
-	public <V> MutableMapping<Integer, V> createDynamicNodeMapping() {
-		return new StateIDGrowingMapping<>(this, this);
-	}
-
-	@Override
-	public Collection<Integer> getNodes() {
-		return getStates();
-	}
-
-	@Override
-	public NodeIDs<Integer> nodeIDs() {
+	public StateIntAbstraction<I,Integer,SP,Void> stateIntAbstraction() {
 		return this;
 	}
-
+	
 	@Override
-	public GraphDOTHelper<Integer, Pair<I, Integer>> getGraphDOTHelper() {
-		return new DefaultDOTHelperAutomaton<>(this);
+	public FullIntAbstraction<Integer,SP,Void> fullIntAbstraction(Alphabet<I> alphabet) {
+		if (alphabet == this.alphabet) {
+			return this;
+		}
+		return MutableDeterministic.super.fullIntAbstraction(alphabet);
+	}
+	
+	public FullIntAbstraction<Integer,SP,Void> fullIntAbstraction() {
+		return this;
+	}
+	
+	
+	@Override
+	public int getIntSuccessor(Integer transition) {
+		return unwrapState(transition);
 	}
 
 	@Override
-	public int getNodeId(Integer node) {
-		return node.intValue();
+	public Integer getTransition(int state, I input) {
+		return wrapState(getSuccessor(state, input));
 	}
 
 	@Override
-	public Integer getNode(int id) {
+	public Integer getTransition(int state, int input) {
+		return wrapState(getSuccessor(state, input));
+	}
+	
+	@Override
+	public int getSuccessor(int state, int input) {
+		return getIntTransition(state, input);
+	}
+	
+	@Override
+	public void setTransition(int state, int input, Integer transition) {
+		setTransition(state, input, unwrapState(transition));
+	}
+	
+	@Override
+	public void setTransition(int state, int input, int successor, Void property) {
+		setTransition(state, input, successor);
+	}
+	
+	@Override
+	public void setTransition(int state, I input, Integer transition) {
+		setTransition(state, input, unwrapState(transition));
+	}
+	
+	@Override
+	public void setTransition(int state, I input, int successor, Void property) {
+		setTransition(state, input, successor);
+	}
+
+	@Override
+	public int numInputs() {
+		return alphabet.size();
+	}
+
+	protected static Integer wrapState(int id) {
+		if(id < 0) {
+			return null;
+		}
 		return Integer.valueOf(id);
 	}
-
-
+	
+	protected static int unwrapState(Integer state) {
+		if (state == null) {
+			return INVALID_STATE;
+		}
+		return state.intValue();
+	}
 	
 }

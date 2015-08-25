@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.words;
 
@@ -23,23 +22,23 @@ import net.automatalib.commons.util.array.ResizingObjectArray;
 
 /**
  * A class for dynamically building {@link Word}s.
- * 
+ * <p>
  * As {@link Word}s are - like strings - immutable objects, constructing them by subsequent
  * invocations of {@link Word#concat(Word...)} etc. is highly inefficient. This class provides an
  * efficient means of construction by operating on an internal storage during construction,
  * only creating a {@link Word} (and thus requiring to ensure immutability) when the method {@link #toWord()}
- * (or {@link #toWord(int, int)} is invoked.
- * 
+ * (or {@link #toWord(int, int)}) is invoked.
+ * <p>
  * Note that due to the specifics of the underlying word implementation, even after an invocation
  * of {@link #toWord()} the storage does not have to be duplicated unless it either is required
  * due to capacity adjustment <i>or</i> a non-appending change (such as {@link #setSymbol(int, Object)}
  * or {@link #truncate(int)}) is made.
- * 
+ * <p>
  * Nearly all modification methods of this class return a <tt>this</tt>-reference, allowing constructs
  * such as
- * <pre>builder.append(foo).append(bar).append(baz);</pre>
+ * {@code builder.append(foo).append(bar).append(baz)}.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  * @param <I> symbol class.
  */
@@ -403,6 +402,11 @@ public final class WordBuilder<I> extends AbstractList<I> {
 		return length;
 	}
 	
+	/**
+	 * Reverses the contents of the internal buffer.
+	 * 
+	 * @return {@code this}
+	 */
 	public WordBuilder<I> reverse() {
 		ensureUnlocked();
 		int lowIdx = 0, highIdx = length - 1;

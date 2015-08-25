@@ -1,28 +1,28 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.util.comparison;
 
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Various methods for dealing with the comparison of objects.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  */
 public abstract class CmpUtil {
@@ -32,7 +32,7 @@ public abstract class CmpUtil {
 	 * element when using a safe comparator
 	 * ({@link CmpUtil#safeComparator(Comparator, NullOrdering)}).
 	 * 
-	 * @author Malte Isberner <malte.isberner@cs.uni-dortmund.de>
+	 * @author Malte Isberner
 	 *
 	 */
 	public static enum NullOrdering {
@@ -90,6 +90,35 @@ public abstract class CmpUtil {
 		return 0;
 	}
 	
+	public static int lexCompare(int[] a1, int[] a2) {
+		int i = 0;
+		int len1 = a1.length, len2 = a2.length;
+		
+		while (i < len1 && i < len2) {
+			int cmp = a1[i] - a2[i];
+			if (cmp != 0) {
+				return cmp;
+			}
+			i++;
+		}
+		
+		if (i < len1) {
+			return 1;
+		}
+		if (i < len2) {
+			return -1;
+		}
+		return 0;
+	}
+	
+	public static int canonicalCompare(int[] a1, int [] a2) {
+		int ldiff = a1.length - a2.length;
+		if (ldiff != 0) {
+			return ldiff;
+		}
+		return lexCompare(a1, a2);
+	}
+	
 	/**
 	 * Lexicographically compares two {@link Iterable}s, whose element types
 	 * are comparable.
@@ -114,9 +143,48 @@ public abstract class CmpUtil {
 	}
 	
 	/**
+	 * Compares two {@link List}s with respect to canonical ordering.
+	 * <p>
+	 * In canonical ordering, a sequence <tt>o1</tt> is less than a sequence <tt>o2</tt> if <tt>o1</tt> is shorter
+	 * than <tt>o2</tt>, or if they have the same length and <tt>o1</tt> is lexicographically smaller than <tt>o2</tt>. 
+	 * @param o1 the first list
+	 * @param o2 the second list
+	 * @param elemComparator the comparator for comparing the single elements
+	 * @return the result of the comparison
+	 */
+	public static <U> int canonicalCompare(List<? extends U> o1, List<? extends U> o2, Comparator<? super U> elemComparator) {
+		int siz1 = o1.size(), siz2 = o2.size();
+		
+		if(siz1 != siz2) {
+			return siz1 - siz2;
+		}
+		
+		return lexCompare(o1, o2, elemComparator);
+	}
+	
+	/**
+	 * Compares two {@link List}s of {@link Comparable} elements with respect to canonical ordering.
+	 * <p>
+	 * In canonical ordering, a sequence <tt>o1</tt> is less than a sequence <tt>o2</tt> if <tt>o1</tt> is shorter
+	 * than <tt>o2</tt>, or if they have the same length and <tt>o1</tt> is lexicographically smaller than <tt>o2</tt>.
+	 * @param o1 the first list
+	 * @param o2 the second list
+	 * @return the result of the comparison
+	 */
+	public static <U extends Comparable<? super U>> int canonicalCompare(List<? extends U> o1, List<? extends U> o2) {
+		int siz1 = o1.size(), siz2 = o2.size();
+		if(siz1 != siz2) {
+			return siz1 - siz2;
+		}
+		
+		return lexCompare(o1, o2);
+	}
+	
+	/**
 	 * Retrieves a lexicographical comparator for the given type.
 	 * @param elemComp the comparator to use for comparing the elements.
-	 * @return a comparator for comparing objects of type <code>T</code>.
+	 * @return a comparator for comparing objects of type <code>T</code>
+	 * based on lexicographical ordering.
 	 */
 	public static <T extends Iterable<U>,U> Comparator<T> lexComparator(Comparator<U> elemComp) {
 		return new LexComparator<T,U>(elemComp);
@@ -129,6 +197,27 @@ public abstract class CmpUtil {
 	 */
 	public static <U extends Comparable<U>,T extends Iterable<U>> Comparator<T> lexComparator() {
 		return NaturalLexComparator.<T,U>getInstance();
+	}
+	
+	
+	/**
+	 * Retrieves a canonical comparator for the given list type.
+	 * @param elemComp the comparator to use for comparing the elements.
+	 * @return a comparator for comparing objects of type <code>T</code> based on
+	 * canonical ordering.
+	 */
+	public static <T extends List<? extends U>,U> Comparator<T> canonicalComparator(Comparator<? super U> elemComp) {
+		return new CanonicalComparator<>(elemComp);
+	}
+	
+	/**
+	 * Retrieves a canonical comparator for the given type, which has to be
+	 * a {@link List} of {@link Comparable} types.
+	 * @return the canonical comparator
+	 * @see #canonicalCompare(List, List)
+	 */
+	public static <T extends List<U>,U extends Comparable<U>> Comparator<T> canonicalComparator() {
+		return NaturalCanonicalComparator.<T,U>getInstance();
 	}
 	
 	/**

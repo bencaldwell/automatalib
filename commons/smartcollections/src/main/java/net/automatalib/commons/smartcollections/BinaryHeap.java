@@ -1,25 +1,26 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.smartcollections;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
+import java.util.Queue;
 
 import net.automatalib.commons.util.array.ResizingObjectArray;
 import net.automatalib.commons.util.comparison.CmpUtil;
@@ -27,13 +28,13 @@ import net.automatalib.commons.util.comparison.CmpUtil;
 /**
  * A {@link PriorityQueue} implementation using a binary heap.
  *  
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  * @param <E> element class.
  */
 public class BinaryHeap<E>
 		extends AbstractSmartCollection<E> implements SmartDynamicPriorityQueue<E>,
-			CapacityManagement {
+			CapacityManagement, Queue<E> {
 	
 	private static final int DEFAULT_INITIAL_CAPACITY = 10;
 	
@@ -49,8 +50,8 @@ public class BinaryHeap<E>
 	 */
 	private static final class Reference<E>
 			implements ElementReference {
-		protected int index;
-		protected E element;
+		private int index;
+		private E element;
 	
 		/**
 		 * Constructor.
@@ -83,6 +84,9 @@ public class BinaryHeap<E>
 		 */
 		@Override
 		public ElementReference next() {
+			if(current >= size) {
+				throw new NoSuchElementException();
+			}
 			return (ElementReference)entries.array[current++];
 		}
 
@@ -308,6 +312,9 @@ public class BinaryHeap<E>
 	@Override
 	@SuppressWarnings("unchecked")
 	public E extractMin() {
+		if (size <= 0) {
+			throw new NoSuchElementException();
+		}
 		E min = ((Reference<E>)entries.array[0]).element;
 		entries.array[0] = entries.array[--size];
 		entries.array[size] = null;
@@ -334,6 +341,9 @@ public class BinaryHeap<E>
 	@Override
 	@SuppressWarnings("unchecked")
 	public E peekMin() {
+		if (size <= 0) {
+			throw new NoSuchElementException();
+		}
 		return ((Reference<E>)entries.array[0]).element;
 	}
 	
@@ -451,6 +461,43 @@ public class BinaryHeap<E>
 	@Override
 	public void quickClear() {
 		size = 0;
+	}
+
+
+	@Override
+	public boolean offer(E e) {
+		add(e);
+		return true;
+	}
+
+
+	@Override
+	public E remove() {
+		return extractMin();
+	}
+
+
+	@Override
+	public E poll() {
+		if (size > 0) {
+			return extractMin();
+		}
+		return null;
+	}
+
+
+	@Override
+	public E element() {
+		return peekMin();
+	}
+
+
+	@Override
+	public E peek() {
+		if (size > 0) {
+			return peekMin();
+		}
+		return null;
 	}
 	
 	

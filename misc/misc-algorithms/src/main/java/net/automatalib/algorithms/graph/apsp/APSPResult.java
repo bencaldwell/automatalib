@@ -1,31 +1,36 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.algorithms.graph.apsp;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import net.automatalib.algorithms.graph.GraphAlgorithms;
+
 /**
  * Result interface for the all pairs shortest paths problem.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  * @param <N> node class
  * @param <E> edge class
  */
+@ParametersAreNonnullByDefault
 public interface APSPResult<N,E> {
 
 	
@@ -33,18 +38,19 @@ public interface APSPResult<N,E> {
 	 * Retrieves the length of the shortest path between the given nodes.
 	 * @param src the source node
 	 * @param tgt the target node
-	 * @return the length of the shortest path from <tt>src</tt> to <tt>tgt</tt>,
+	 * @return the length of the shortest path from {@code src} to {@code tgt},
 	 * or {@link GraphAlgorithms#INVALID_DISTANCE} if there exists no such path.
 	 */
 	public float getShortestPathDistance(N src, N tgt);
 	
 	/**
-	 * Retrieves the shortest path between the given nodes, or <tt>null</tt> if there
+	 * Retrieves the shortest path between the given nodes, or {@code null} if there
 	 * exists no such path.
 	 * @param src the source node
 	 * @param tgt the target node
-	 * @return the shortest path from <tt>src</tt> to <tt>tgt</tt>, or <tt>null</tt>
+	 * @return the shortest path from {@code src} to {@code tgt}, or {@code null}
 	 * if there exists no such path.
 	 */
+	@Nullable
 	public List<E> getShortestPath(N src, N tgt);
 }

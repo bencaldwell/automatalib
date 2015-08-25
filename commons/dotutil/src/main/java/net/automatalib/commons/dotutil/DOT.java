@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.dotutil;
 
@@ -20,6 +19,8 @@ import java.awt.Desktop;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,6 +34,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -51,14 +53,53 @@ import net.automatalib.commons.util.IOUtil;
  * of the provided methods require GraphVIZ to be installed on the system, and that the
  * "dot" binary resides in the execution path.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  */
 public class DOT {
 	
+	private static final Logger LOGGER = Logger.getLogger("automatalib.dotutil");
+	
 	private static final int MAX_WIDTH = 800;
 	private static final int MAX_HEIGHT = 600;
 	
+	private static String dotExe = "dot";
+	
+	public static void setDotExe(String dotExe) {
+		DOT.dotExe = dotExe;
+	}
+	
+	public static boolean checkUsable() {
+		try {
+			Process p = executeDOTRaw("-V");
+			
+			int result = p.waitFor();
+			if (result == 0) {
+				return true;
+			}
+		}
+		catch (IOException | InterruptedException ex) {
+			ex.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static Process executeDOTRaw(String... opts) throws IOException {
+		String[] dotArgs = new String[1 + opts.length];
+		dotArgs[0] = dotExe;
+		System.arraycopy(opts, 0, dotArgs, 1, opts.length);
+		Process dot = Runtime.getRuntime().exec(dotArgs);
+		
+		return dot;
+	}
+	
+	public static Process executeDOT(String format, String ...additionalOpts) throws IOException {
+		String[] dotArgs = new String[1 + additionalOpts.length];
+		dotArgs[0] = "-T" + format;
+		System.arraycopy(additionalOpts, 0, dotArgs, 1, additionalOpts.length);
+		
+		return executeDOTRaw(dotArgs);
+	}
 	
 	
 	/**
@@ -70,11 +111,7 @@ public class DOT {
 	 * @throws IOException if reading from the specified reader fails.
 	 */
 	public static InputStream runDOT(Reader r, String format, String ...additionalOpts) throws IOException {
-		String[] dotArgs = new String[2 + additionalOpts.length];
-		dotArgs[0] = "dot";
-		dotArgs[1] = "-T" + format;
-		System.arraycopy(additionalOpts, 0, dotArgs, 2, additionalOpts.length);
-		final Process dot = Runtime.getRuntime().exec(dotArgs);
+		Process dot = executeDOT(format, additionalOpts);
 		
 		OutputStream dotIn = dot.getOutputStream();
 		Writer dotWriter = new OutputStreamWriter(dotIn);
@@ -91,7 +128,7 @@ public class DOT {
 	
 	/**
 	 * Invokes the DOT utility on a string.
-	 * Convenience method, see {@link #runDOT(Reader, String)}.
+	 * Convenience method, see {@link #runDOT(Reader, String, String...)}
 	 */
 	public static InputStream runDOT(String dotText, String format, String ...additionalOpts) throws IOException {
 		StringReader sr = new StringReader(dotText);
@@ -100,7 +137,7 @@ public class DOT {
 	
 	/**
 	 * Invokes the DOT utility on a file.
-	 * Convenience method, see {@link #runDOT(Reader, String)}.
+	 * Convenience method, see {@link #runDOT(Reader, String, String...)}.
 	 */
 	public static InputStream runDOT(File dotFile, String format, String ...additionalOpts) throws IOException {
 		FileReader fr = new FileReader(dotFile);
@@ -117,18 +154,20 @@ public class DOT {
 	 * or writing to the output file.
 	 */
 	public static void runDOT(Reader r, String format, File out) throws IOException {
-		String[] dotArgs = new String[3];
-		dotArgs[0] = "dot";
-		dotArgs[1] = "-T" + format;
-		
-		dotArgs[2] = "-o" + out.getAbsolutePath();
-		
-		Process dot = Runtime.getRuntime().exec(dotArgs);
+		Process dot = executeDOT(format, "-o" + out.getAbsolutePath());
 		
 		OutputStream dotIn = dot.getOutputStream();
 		Writer dotWriter = new OutputStreamWriter(dotIn);
 		
 		IOUtil.copy(r, dotWriter);
+		dot.getErrorStream().close();
+		dot.getInputStream().close();
+		try {
+			dot.waitFor();
+		}
+		catch(InterruptedException ex) {
+			LOGGER.warning("Interrupted while waiting for 'dot' process to exit." + ex);
+		}
 	}
 	
 	
@@ -192,7 +231,7 @@ public class DOT {
 	 * @param modal whether or not the dialog should be modal.
 	 */
 	public static void renderDOT(Reader r, boolean modal) {
-		DOTComponent cmp = createDOTComponent(r);
+		final DOTComponent cmp = createDOTComponent(r);
 		if (cmp == null)
 			return;
 
@@ -218,6 +257,13 @@ public class DOT {
 		frame.setJMenuBar(menuBar);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setVisible(true);
+		frame.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+					frame.setVisible(false);
+			}
+		});
 	}
 	
 	
@@ -303,7 +349,6 @@ public class DOT {
 	 * @return the writer
 	 */
 	public static Writer createDotWriter(final boolean modal) {
-		// TODO: Change this to an OutputStreamWriter and write directly to the pipe
 		return new StringWriter() {
 			@Override
 			public void close() throws IOException {
@@ -312,4 +357,5 @@ public class DOT {
 			}
 		};
 	}
+
 }

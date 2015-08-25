@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.util.automata.equivalence;
 
@@ -83,7 +82,7 @@ public class NearLinearEquivalenceTest<I> {
 		
 		Queue<Record<S,S2,I>> queue = new ArrayDeque<Record<S,S2,I>>();
 		
-		queue.offer(new Record<S,S2,I>(init1, init2));
+		queue.add(new Record<S,S2,I>(init1, init2));
 		
 		I lastSym = null;
 		
@@ -138,7 +137,7 @@ explore:while((current = queue.poll()) != null) {
 				
 				uf.link(r1, r2);
 				
-				queue.offer(new Record<>(succ1, succ2, sym, current));
+				queue.add(new Record<>(succ1, succ2, sym, current));
 			}
         }
 		
@@ -183,7 +182,7 @@ explore:while((current = queue.poll()) != null) {
 		
 		Queue<Record<S,S,I>> queue = new ArrayDeque<Record<S,S,I>>();
 		
-		queue.offer(new Record<S,S,I>(init1, init2));
+		queue.add(new Record<S,S,I>(init1, init2));
 		
 		I lastSym = null;
 		Record<S,S,I> current;
@@ -237,7 +236,7 @@ explore:while((current = queue.poll()) != null) {
 				
 				uf.link(r1, r2);
 				
-				queue.offer(new Record<>(succ1, succ2, sym, current));
+				queue.add(new Record<>(succ1, succ2, sym, current));
 			}
         }
 		

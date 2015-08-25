@@ -1,27 +1,24 @@
-/* Copyright (C) 2013 TU Dortmund
+/* Copyright (C) 2013-2014 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.brics;
 
-import java.util.Collection;
-import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.automatalib.automata.abstractimpl.AbstractDeterministicAutomaton;
 import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.fsa.abstractimpl.AbstractDFA;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.State;
 
@@ -32,9 +29,10 @@ import dk.brics.automaton.State;
  * are reflected. Please note that any changes which result in a loss of determinism
  * will result in incorrect behavior exposed by this class until determinism is restored.
  *  
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner
  *
  */
+@ParametersAreNonnullByDefault
 public class BricsDFA extends AbstractBricsAutomaton implements
 		DFA<State, Character> {
 	
@@ -70,15 +68,6 @@ public class BricsDFA extends AbstractBricsAutomaton implements
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.automatalib.ts.acceptors.AcceptorTS#accepts(java.lang.Iterable)
-	 */
-	@Override
-	public boolean accepts(Iterable<Character> input) {
-		return AbstractDFA.accepts(this, input);
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see net.automatalib.ts.simple.SimpleDTS#getInitialState()
 	 */
 	@Override
@@ -91,26 +80,8 @@ public class BricsDFA extends AbstractBricsAutomaton implements
 	 * @see net.automatalib.ts.simple.SimpleDTS#getSuccessor(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public State getSuccessor(State state, Character input) {
+	public State getSuccessor(State state, @Nonnull Character input) {
 		return state.step(input.charValue());
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.ts.simple.SimpleDTS#getSuccessor(java.lang.Object, java.lang.Iterable)
-	 */
-	@Override
-	public State getSuccessor(State state, Iterable<Character> input) {
-		return AbstractDeterministicAutomaton.getSuccessor(this, state, input);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.ts.simple.SimpleDTS#getState(java.lang.Iterable)
-	 */
-	@Override
-	public State getState(Iterable<Character> input) {
-		return AbstractDeterministicAutomaton.getState(this, input);
 	}
 
 	/*
@@ -118,27 +89,8 @@ public class BricsDFA extends AbstractBricsAutomaton implements
 	 * @see net.automatalib.ts.DeterministicTransitionSystem#getTransition(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public State getTransition(State state, Character input) {
+	public State getTransition(State state, @Nonnull Character input) {
 		return state.step(input.charValue());
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.brics.AbstractBricsAutomaton#getTransitions(dk.brics.automaton.State, java.lang.Character)
-	 */
-	@Override
-	public Collection<State> getTransitions(State state, Character input) {
-		return AbstractDeterministicAutomaton.getTransitions(this, state, input);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.ts.abstractimpl.AbstractTS#getSuccessors(java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public Set<State> getSuccessors(State state, Character input) {
-		return AbstractDeterministicAutomaton.getSuccessors(this, state, input);
-	}
-	
 	
 }

@@ -1,45 +1,41 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.automata.transout;
 
-import java.util.List;
+import java.util.Collection;
 
-import net.automatalib.automata.concepts.SODetOutputAutomaton;
-import net.automatalib.automata.concepts.TransitionOutput;
+import net.automatalib.automata.concepts.DetSuffixOutputAutomaton;
+import net.automatalib.ts.transout.DeterministicTransitionOutputTS;
 import net.automatalib.words.Word;
+import net.automatalib.words.WordBuilder;
 
 
 public interface TransitionOutputAutomaton<S, I, T, O>
-		extends SODetOutputAutomaton<S, I, T, Word<O>>, TransitionOutput<T, O> {
-	
-	/**
-	 * Retrieves the output for the given input symbol in the given state.
-	 * This is roughly equivalent to calling {@link #getTransitionOutput(Object)}
-	 * on the transition returned by {@link #getTransition(Object, Object)}, however
-	 * it should be noted that this function does not allow distinguishing between
-	 * a <code>null</code> output and an undefined transition.
-	 * 
-	 * @param state the source state
-	 * @param input the input symbol
-	 * @return the output symbol (or <code>null</code> if the transition is undefined)
-	 */
-	public O getOutput(S state, I input);
-	
-	public void trace(Iterable<I> input, List<O> output);
-	public void trace(S state, Iterable<I> input, List<O> output);
+		extends DetSuffixOutputAutomaton<S, I, T, Word<O>>, DeterministicTransitionOutputTS<S,I,T,O> {
+	@Override
+	default public Word<O> computeStateOutput(S state, Iterable<? extends I> input) {
+		WordBuilder<O> result;
+		if (input instanceof Collection) {
+			result = new WordBuilder<>(((Collection<?>) input).size());
+		}
+		else {
+			result = new WordBuilder<>();
+		}
+		trace(state, input, result);
+		return result.toWord();
+	}
 }
 

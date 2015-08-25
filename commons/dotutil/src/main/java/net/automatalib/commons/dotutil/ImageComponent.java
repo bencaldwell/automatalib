@@ -1,18 +1,17 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.commons.dotutil;
 
@@ -23,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -31,16 +31,19 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+
 /**
  * Component that displays a {@link BufferedImage}.
  * 
- * @author Malte Isberner <malte.isberner@gmail.com>
+ * @author Malte Isberner 
  *
  */
 public class ImageComponent extends JComponent  {
 	private static final long serialVersionUID = -1L;
 	
 	private BufferedImage img;
+	
+	private boolean scale = false;
 	
 	
 	private final Action savePngAction = new AbstractAction("Save PNG") {
@@ -68,6 +71,10 @@ public class ImageComponent extends JComponent  {
 	 */
 	public ImageComponent() {
 		setPreferredSize(new Dimension(320, 240));
+	}
+	
+	public void listActions(List<Action> actions) {
+		actions.add(savePngAction);
 	}
 	
 	/**
@@ -122,7 +129,21 @@ public class ImageComponent extends JComponent  {
 	protected void paintComponent(Graphics g) {
 		g.setColor(Color.WHITE);
 		g.fillRect(0, 0, getWidth(), getHeight());
-		if(img != null)
-			g.drawImage(img, 0, 0, null);
+		if(img != null) {
+			if(!scale)
+				g.drawImage(img, 0, 0, null);
+			else
+				g.drawImage(img, 0, 0, getWidth(), getHeight(), null);
+		}
+	}
+	
+	
+	public void setScale(boolean scale) {
+		this.scale = scale;
+		repaint();
+	}
+	
+	public void toggleScale() {
+		setScale(!scale);
 	}
 }

@@ -1,40 +1,40 @@
 /* Copyright (C) 2013 TU Dortmund
  * This file is part of AutomataLib, http://www.automatalib.net/.
  * 
- * AutomataLib is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License version 3.0 as published by the Free Software Foundation.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
- * AutomataLib is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with AutomataLib; if not, see
- * http://www.gnu.de/documents/lgpl.en.html.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package net.automatalib.automata.transout.impl.compact;
 
-import java.util.List;
-
+import net.automatalib.automata.AutomatonCreator;
 import net.automatalib.automata.base.compact.AbstractCompactDeterministic;
-import net.automatalib.automata.dot.DOTHelperMealy;
-import net.automatalib.automata.dot.DOTPlottableAutomaton;
 import net.automatalib.automata.transout.MutableMealyMachine;
-import net.automatalib.automata.transout.abstractimpl.AbstractMealyMachine;
-import net.automatalib.automata.transout.abstractimpl.AbstractTransOutAutomaton;
-import net.automatalib.commons.util.Pair;
-import net.automatalib.graphs.dot.GraphDOTHelper;
 import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
 
 public class CompactMealy<I, O> extends
 		AbstractCompactDeterministic<I, CompactMealyTransition<O>, Void, O> implements
-		MutableMealyMachine<Integer, I, CompactMealyTransition<O>, O>, DOTPlottableAutomaton<Integer,I,CompactMealyTransition<O>> {
+		MutableMealyMachine<Integer, I, CompactMealyTransition<O>, O> {
 	
-	
-
+	public static final class Creator<I,O> implements AutomatonCreator<CompactMealy<I,O>, I> {
+		@Override
+		public CompactMealy<I, O> createAutomaton(Alphabet<I> alphabet) {
+			return new CompactMealy<>(alphabet);
+		}
+		@Override
+		public CompactMealy<I,O> createAutomaton(Alphabet<I> alphabet, int sizeHint) {
+			return new CompactMealy<>(alphabet, sizeHint);
+		}
+	}
+		
 	public CompactMealy(Alphabet<I> alphabet, float resizeFactor) {
 		super(alphabet, resizeFactor);
 	}
@@ -60,69 +60,15 @@ public class CompactMealy<I, O> extends
 	public O getTransitionOutput(CompactMealyTransition<O> transition) {
 		return transition.getOutput();
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.MutableAutomaton#setTransitionProperty(java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setTransitionProperty(CompactMealyTransition<O> transition,
-			O property) {
-		transition.setOutput(property);
-	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.transout.TransitionOutputAutomaton#getOutput(java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public O getOutput(Integer state, I input) {
-		return AbstractTransOutAutomaton.getOutput(this, state, input);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.transout.TransitionOutputAutomaton#trace(java.lang.Iterable, java.util.List)
-	 */
-	@Override
-	public void trace(Iterable<I> input, List<O> output) {
-		AbstractTransOutAutomaton.trace(this, input, output);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.transout.TransitionOutputAutomaton#trace(java.lang.Object, java.lang.Iterable, java.util.List)
-	 */
-	@Override
-	public void trace(Integer state, Iterable<I> input, List<O> output) {
-		AbstractTransOutAutomaton.trace(this, state, input, output);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.concepts.SuffixOutput#computeSuffixOutput(java.lang.Iterable, java.lang.Iterable)
-	 */
-	@Override
-	public Word<O> computeSuffixOutput(Iterable<I> prefix, Iterable<I> suffix) {
-		return AbstractTransOutAutomaton.computeSuffixOutput(this, prefix, suffix);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.concepts.Output#computeOutput(java.lang.Iterable)
-	 */
-	@Override
-	public Word<O> computeOutput(Iterable<I> input) {
-		return AbstractTransOutAutomaton.computeOutput(this, input);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.ts.UniversalTransitionSystem#getTransitionProperty(java.lang.Object)
-	 */
 	@Override
 	public O getTransitionProperty(CompactMealyTransition<O> transition) {
-		return AbstractMealyMachine.getTransitionProperty(this, transition);
+		return transition.getOutput();
+	}
+	
+	@Override
+	public void setTransitionProperty(CompactMealyTransition<O> transition, O property) {
+		transition.setOutput(property);
 	}
 
 	/*
@@ -155,15 +101,6 @@ public class CompactMealy<I, O> extends
 	
 	/*
 	 * (non-Javadoc)
-	 * @see net.automatalib.automata.base.compact.AbstractCompactDeterministic#getStateProperty(java.lang.Integer)
-	 */
-	@Override
-	public Void getStateProperty(Integer state) {
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see net.automatalib.automata.base.compact.AbstractCompactDeterministic#createTransition(int, java.lang.Object)
 	 */
 	@Override
@@ -187,15 +124,6 @@ public class CompactMealy<I, O> extends
 	 */
 	@Override
 	public void setStateProperty(int state, Void property) {
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.automatalib.automata.dot.DOTPlottableAutomaton#getDOTHelper()
-	 */
-	@Override
-	public GraphDOTHelper<Integer, Pair<I, CompactMealyTransition<O>>> getDOTHelper() {
-		return new DOTHelperMealy<>(this);
 	}
 	
 }
